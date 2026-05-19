@@ -16,9 +16,14 @@ io.on('connection', (socket) => {
   socket.on('join-room', (roomCode) => {
     if (currentRoom) socket.leave(currentRoom);
     currentRoom = String(roomCode).trim().toLowerCase();
+    const existingCount = io.sockets.adapter.rooms.get(currentRoom)?.size || 0;
     socket.join(currentRoom);
     const count = io.sockets.adapter.rooms.get(currentRoom)?.size || 0;
     io.to(currentRoom).emit('room-users', count);
+    if (existingCount > 0) {
+      // Pedirle a los que ya estaban que manden sus datos al nuevo
+      socket.to(currentRoom).emit('new-peer');
+    }
   });
 
   socket.on('data-update', ({ roomCode, key, data }) => {
